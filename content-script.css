@@ -1,0 +1,22 @@
+[data-spider-shield-blurred="true"] {
+  filter: blur(28px) !important;
+  transition: filter 160ms ease;
+}
+
+.spider-shield-overlay {
+  position: absolute;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(23, 33, 27, 0.88);
+  color: #fff;
+  font: 700 13px Arial, sans-serif;
+}
+
+.spider-shield-overlay button {
+  width: auto;
+  border: 1px solid #fff;
+  color: #fff;
+  background: transparent;
+}

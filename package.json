@@ -1,0 +1,12 @@
+{
+  "name": "spider-shield",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "serve .",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "serve": "^14.0.0"
+  }
+}

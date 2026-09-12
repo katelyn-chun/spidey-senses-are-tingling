@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Spider Shield",
+  "version": "0.1.0",
+  "description": "Blur likely spider images before they can cause a jumpscare.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_title": "Spider Shield",
+    "default_popup": "index.html"
+  },
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["detector.js", "content-script.js"],
+      "css": ["content-script.css"],
+      "run_at": "document_start"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Spider Shield test fixture</title>
+  <style>
+    body { max-width: 800px; margin: 40px auto; font: 18px system-ui; }
+    img { width: 240px; height: 160px; object-fit: cover; margin: 8px; background: #e5eadc; }
+  </style>
+</head>
+<body>
+  <h1>Spider Shield test fixture</h1>
+  <p>These placeholder images test metadata detection and dynamic insertion.</p>
+  <img src="https://placehold.co/240x160?text=Spider" alt="spider photo">
+  <img src="https://placehold.co/240x160?text=Landscape" alt="mountain landscape">
+  <div id="dynamic-images"></div>
+  <script>
+    setTimeout(() => {
+      const image = document.createElement('img');
+      image.src = 'https://placehold.co/240x160?text=Spider';
+      image.alt = 'tarantula illustration';
+      document.querySelector('#dynamic-images').append(image);
+    }, 1500);
+  </script>
+</body>
+</html>

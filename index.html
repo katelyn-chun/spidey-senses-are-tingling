@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spider Shield</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="popup-shell">
+      <header class="popup-header">
+        <div>
+          <p class="eyebrow">Privacy-first browser protection</p>
+          <h1>Spider Shield</h1>
+        </div>
+        <span id="status-dot" class="status-dot" aria-hidden="true"></span>
+      </header>
+      <section class="status-panel" aria-live="polite">
+        <p id="status-label">Protection is loading...</p>
+        <p id="status-detail">Images are analyzed on this device.</p>
+      </section>
+      <label class="setting-row" for="enabled">
+        <span><strong>Protection</strong><small>Blur likely spider images before they appear.</small></span>
+        <input id="enabled" type="checkbox" checked />
+      </label>
+      <label class="setting-block" for="threshold">
+        <span class="setting-heading"><strong>Sensitivity</strong><output id="threshold-value" for="threshold">80%</output></span>
+        <input id="threshold" type="range" min="50" max="98" value="80" />
+        <small>Higher values reduce false alarms but may miss some images.</small>
+      </label>
+      <dl class="stats" aria-label="Current tab scan statistics">
+        <div><dt>Scanned</dt><dd id="scanned-count">0</dd></div>
+        <div><dt>Blurred</dt><dd id="blurred-count">0</dd></div>
+      </dl>
+      <button id="pause-site" class="secondary-button" type="button">Pause on this site</button>
+      <p class="privacy-note">No images, page URLs, or browsing activity leave your device.</p>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
