@@ -5,9 +5,21 @@
   "description": "Blur likely spider images before they can cause a jumpscare.",
   "permissions": ["storage", "activeTab"],
   "host_permissions": ["<all_urls>"],
+  "icons": {
+    "16": "spidey_icon.png",
+    "32": "spidey_icon.png",
+    "48": "spidey_icon.png",
+    "128": "spidey_icon.png"
+  },
   "action": {
     "default_title": "Spider Shield",
-    "default_popup": "index.html"
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "spidey_icon.png",
+      "32": "spidey_icon.png",
+      "48": "spidey_icon.png",
+      "128": "spidey_icon.png"
+    }
   },
   "background": {
     "service_worker": "service-worker.js"

@@ -1,4 +1,6 @@
 (() => {
+  const MAX_RETRIES = 4;
+  const RETRY_DELAY = 500;
   const state = {
     enabled: true,
     threshold: 0.8,
@@ -7,6 +9,8 @@
     blurred: 0,
     queued: new Set(),
     processed: new WeakMap(),
+    retries: new WeakMap(),
+    observedRoots: new WeakSet(),
   };
 
   function getSettings() {
@@ -49,17 +53,41 @@
   }
 
   function imageFingerprint(image) {
-    return [image.currentSrc, image.src, image.srcset, image.alt, image.title, image.getAttribute('aria-label')].join('|');
+    return [
+      image.currentSrc,
+      image.src,
+      image.srcset,
+      image.getAttribute('data-src'),
+      image.getAttribute('data-srcset'),
+      image.alt,
+      image.title,
+      image.getAttribute('aria-label'),
+    ].join('|');
+  }
+
+  function retryImage(image) {
+    const retries = state.retries.get(image) || 0;
+    if (retries >= MAX_RETRIES) return;
+    state.retries.set(image, retries + 1);
+    setTimeout(() => queueImage(image), RETRY_DELAY * (retries + 1));
   }
 
   async function inspectImage(image) {
     const fingerprint = imageFingerprint(image);
     if (state.pausedForSite || !state.enabled || state.processed.get(image) === fingerprint) return;
-    if (!image.complete || image.naturalWidth < 80 || image.naturalHeight < 80) return;
-    state.processed.set(image, fingerprint);
+    if (!image.complete || image.naturalWidth < 80 || image.naturalHeight < 80) {
+      retryImage(image);
+      return;
+    }
     state.scanned += 1;
-    const result = await globalThis.spiderShieldDetector.classifyImage(image);
-    if (result.confidence >= state.threshold) blurImage(image, result.confidence);
+    try {
+      const result = await globalThis.spiderShieldDetector.classifyImage(image);
+      state.processed.set(image, fingerprint);
+      state.retries.delete(image);
+      if (result.confidence >= state.threshold) blurImage(image, result.confidence);
+    } catch {
+      retryImage(image);
+    }
   }
 
   function queueImage(image) {
@@ -67,14 +95,23 @@
     state.queued.add(image);
     const run = () => inspectImage(image).finally(() => state.queued.delete(image));
     if (image.complete) run();
-    else image.addEventListener('load', run, { once: true });
+    else {
+      image.addEventListener('load', run, { once: true });
+      image.addEventListener('error', () => {
+        state.queued.delete(image);
+        retryImage(image);
+      }, { once: true });
+    }
   }
 
   function scan(root = document) {
     if (root instanceof HTMLImageElement) queueImage(root);
     root.querySelectorAll?.('img').forEach(queueImage);
     root.querySelectorAll?.('*').forEach((element) => {
-      if (element.shadowRoot) scan(element.shadowRoot);
+      if (element.shadowRoot) {
+        observeRoot(element.shadowRoot);
+        scan(element.shadowRoot);
+      }
     });
   }
 
@@ -89,6 +126,29 @@
     });
   });
 
+  function observeRoot(root) {
+    if (state.observedRoots.has(root)) return;
+    state.observedRoots.add(root);
+    observer.observe(root, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: [
+        'alt',
+        'aria-label',
+        'class',
+        'data-image-title',
+        'data-lazy-src',
+        'data-src',
+        'data-srcset',
+        'src',
+        'srcset',
+        'style',
+        'title',
+      ],
+    });
+  }
+
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message?.type === 'get-status') sendResponse({ scanned: state.scanned, blurred: state.blurred });
     if (message?.type === 'settings-updated' && message.settings) {
@@ -102,12 +162,7 @@
   getSettings().then((settings) => {
     state.enabled = settings.enabled;
     state.threshold = settings.threshold;
-    observer.observe(document.documentElement, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['alt', 'aria-label', 'data-image-title', 'src', 'srcset', 'title'],
-    });
+    observeRoot(document.documentElement);
     scan();
   });
 })();
