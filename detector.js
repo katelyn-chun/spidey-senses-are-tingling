@@ -1,6 +1,67 @@
 (() => {
-  const SPIDER_TERMS = /\b(spider|arachnid|tarantula|orb[- ]?weaver|black widow|scorpion)\b/i;
+  const SPIDER_TERMS = [
+    'spider',
+    'spiderling',
+    'arachnid',
+    'tarantula',
+    'orb weaver',
+    'black widow',
+    'scorpion',
+    'daddy long legs',
+    'harvestman',
+    'cellar spider',
+    'hobo spider',
+    'wolf spider',
+    'brown recluse',
+    'funnel web spider',
+    'jumping spider',
+    'garden spider',
+    'house spider',
+    'trapdoor spider',
+    'crab spider',
+    'banana spider',
+    'redback spider',
+    'false widow',
+    'huntsman spider',
+    'fishing spider',
+    'lynx spider',
+    'zebra spider',
+    'white tail spider',
+    'six eyed sand spider',
+    'wandering spider',
+    'goliath birdeater',
+    'golden silk orb weaver',
+  ];
   const ANALYSIS_SIZE = 32;
+
+  function normalizeMetadata(value) {
+    return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  }
+
+  function collectContext(image) {
+    const values = [];
+    let element = image;
+    for (let depth = 0; element && depth < 4; depth += 1, element = element.parentElement) {
+      values.push(
+        element.getAttribute?.('aria-label'),
+        element.getAttribute?.('data-testid'),
+        element.getAttribute?.('data-adclicklocation'),
+        element.getAttribute?.('title'),
+      );
+    }
+    const post = image.closest('article, [data-testid="post-container"], shreddit-post');
+    if (post) values.push(post.textContent);
+    return values.filter(Boolean);
+  }
+
+  const spiderPattern = new RegExp(
+    `\\b(?:${SPIDER_TERMS
+      .map(normalizeMetadata)
+      .sort((left, right) => right.length - left.length)
+      .map((term) => term.replace(/\s+/g, '\\s+'))
+      .join('|')})\\b`,
+    'i',
+  );
 
   function classifyPixels(image) {
     const canvas = document.createElement('canvas');
@@ -39,8 +100,20 @@
   }
 
   async function classifyImage(image) {
-    const metadata = [image.alt, image.title, image.currentSrc, image.src].filter(Boolean).join(' ');
-    const metadataMatch = SPIDER_TERMS.test(metadata);
+    const link = image.closest('a');
+    const metadata = [
+      image.alt,
+      image.title,
+      image.getAttribute('aria-label'),
+      image.getAttribute('data-image-title'),
+      image.currentSrc,
+      image.src,
+      link?.getAttribute('aria-label'),
+      link?.title,
+      link?.textContent,
+      ...collectContext(image),
+    ].filter(Boolean).join(' ');
+    const metadataMatch = spiderPattern.test(normalizeMetadata(metadata));
     if (metadataMatch) return { confidence: 0.99, source: 'metadata-fallback' };
 
     try {

@@ -6,7 +6,7 @@
     scanned: 0,
     blurred: 0,
     queued: new Set(),
-    processed: new WeakSet(),
+    processed: new WeakMap(),
   };
 
   function getSettings() {
@@ -37,7 +37,7 @@
     overlay.style.height = `${image.offsetHeight}px`;
     const reveal = document.createElement('button');
     reveal.type = 'button';
-    reveal.textContent = 'Reveal image';
+    reveal.textContent = 'Watch out! Sp*der alert! Click to reveal at your own risk.';
     reveal.addEventListener('click', () => {
       image.style.filter = 'none';
       image.dataset.spiderShieldBlurred = 'false';
@@ -48,10 +48,15 @@
     state.blurred += 1;
   }
 
+  function imageFingerprint(image) {
+    return [image.currentSrc, image.src, image.srcset, image.alt, image.title, image.getAttribute('aria-label')].join('|');
+  }
+
   async function inspectImage(image) {
-    if (state.pausedForSite || !state.enabled || state.processed.has(image)) return;
+    const fingerprint = imageFingerprint(image);
+    if (state.pausedForSite || !state.enabled || state.processed.get(image) === fingerprint) return;
     if (!image.complete || image.naturalWidth < 80 || image.naturalHeight < 80) return;
-    state.processed.add(image);
+    state.processed.set(image, fingerprint);
     state.scanned += 1;
     const result = await globalThis.spiderShieldDetector.classifyImage(image);
     if (result.confidence >= state.threshold) blurImage(image, result.confidence);
@@ -68,12 +73,20 @@
   function scan(root = document) {
     if (root instanceof HTMLImageElement) queueImage(root);
     root.querySelectorAll?.('img').forEach(queueImage);
+    root.querySelectorAll?.('*').forEach((element) => {
+      if (element.shadowRoot) scan(element.shadowRoot);
+    });
   }
 
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => mutation.addedNodes.forEach((node) => {
       if (node.nodeType === Node.ELEMENT_NODE) scan(node);
     }));
+    mutations.forEach((mutation) => {
+      if (mutation.type !== 'attributes') return;
+      const target = mutation.target.closest?.('a') || mutation.target;
+      scan(target);
+    });
   });
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -89,7 +102,12 @@
   getSettings().then((settings) => {
     state.enabled = settings.enabled;
     state.threshold = settings.threshold;
-    observer.observe(document.documentElement, { childList: true, subtree: true });
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['alt', 'aria-label', 'data-image-title', 'src', 'srcset', 'title'],
+    });
     scan();
   });
 })();
