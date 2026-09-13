@@ -95,7 +95,7 @@
     const darkRatio = darkPixels / pixelCount;
     const warmDarkRatio = warmDarkPixels / pixelCount;
     const normalizedEdges = edgeEnergy / (pixelCount * 3 * 255);
-    const confidence = Math.min(0.79, darkRatio * 0.35 + warmDarkRatio * 0.25 + normalizedEdges * 0.6);
+    const confidence = Math.min(1, darkRatio * 0.35 + warmDarkRatio * 0.25 + normalizedEdges * 0.6);
     return { confidence, source: 'local-visual' };
   }
 
