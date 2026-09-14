@@ -6,12 +6,22 @@
 .spider-shield-overlay {
   position: absolute;
   z-index: 2147483647;
+  pointer-events: auto;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(23, 33, 27, 0.88);
   color: #fff;
   font: 700 13px Arial, sans-serif;
+}
+
+.spider-shield-overlay,
+.spider-shield-overlay button {
+  cursor: pointer;
+}
+
+.spider-shield-overlay button {
+  pointer-events: auto;
 }
 
 .spider-shield-overlay button {

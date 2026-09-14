@@ -42,7 +42,9 @@
     const reveal = document.createElement('button');
     reveal.type = 'button';
     reveal.textContent = 'Watch out! Sp*der alert! Click to reveal at your own risk.';
-    reveal.addEventListener('click', () => {
+    reveal.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       image.style.filter = 'none';
       image.dataset.spiderShieldBlurred = 'false';
       overlay.remove();
